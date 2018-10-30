@@ -13,7 +13,7 @@ var (
 	settings = map[string]string{
 		"root":      ".",
 		"tmp_path":  "./tmp",
-		"valid_ext": ".go, .tpl, .tmpl, .html, .toml",
+		"valid_ext": ".go, .tpl, .tmpl, .html, .toml, .yml",
 		"ignored":   "assets, tmp",
 	}
 	letters = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
