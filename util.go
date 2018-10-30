@@ -1,7 +1,6 @@
 package main
 
 import (
-	"math/rand"
 	"os"
 	"os/signal"
 	"path/filepath"
@@ -16,7 +15,6 @@ var (
 		"valid_ext": ".go, .tpl, .tmpl, .html, .toml, .yml",
 		"ignored":   "assets, tmp",
 	}
-	letters = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
 )
 
 func handleSig() {
@@ -42,14 +40,6 @@ func handleSig() {
 			}
 		}
 	}()
-}
-
-func randStr(n int) string {
-	b := make([]rune, n)
-	for i := range b {
-		b[i] = letters[rand.Intn(len(letters))]
-	}
-	return string(b)
 }
 
 func isTmpDir(path string) bool {

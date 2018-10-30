@@ -19,7 +19,7 @@ var (
 
 func init() {
 	rand.Seed(time.Now().UnixNano())
-	binFile = fmt.Sprintf(`%s/watch-%s`, tmpPath(), randStr(12))
+	binFile = tmpPath() + `/go-watch-tmp`
 	watchChan = make(chan string, 1000)
 }
 
