@@ -9,28 +9,31 @@ import (
 	"math/rand"
 	"os"
 	"os/exec"
-	"os/signal"
-	"syscall"
 	"time"
+)
+
+var (
+	binFile, lastHash string
+	watchChan         chan string
 )
 
 func init() {
 	rand.Seed(time.Now().UnixNano())
+	binFile = fmt.Sprintf(`%s/watch-%s`, tmpPath(), randStr(12))
+	watchChan = make(chan string, 1000)
 }
 
-var (
-	lastBinHash, cache string
-)
-
 func main() {
-	handleSignal()
+	handleSig()
+	watch()
+	start()
+}
 
-	cache = `./tmp/` + randStr(24)
-
+func start() {
 	var server *exec.Cmd
 
 	for {
-		exec.Command(`go`, `build`, `-o`, cache).Run()
+		exec.Command(`go`, `build`, `-o`, binFile).Run()
 		if shouldRestart() {
 
 			if server != nil && server.Process != nil {
@@ -40,7 +43,7 @@ func main() {
 				log.Println(`[go-watch] start`)
 			}
 
-			server = exec.Command(`./` + cache)
+			server = exec.Command(`./` + binFile)
 
 			stdout, err := server.StdoutPipe()
 			if err != nil {
@@ -68,57 +71,22 @@ func main() {
 				log.Fatal(err)
 			}
 		}
-		time.Sleep(5 * time.Second)
+		<-watchChan
 	}
-}
-
-var letters = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
-
-func randStr(n int) string {
-	b := make([]rune, n)
-	for i := range b {
-		b[i] = letters[rand.Intn(len(letters))]
-	}
-	return string(b)
-}
-
-func handleSignal() {
-	ch := make(chan os.Signal, 1)
-	signal.Notify(ch,
-		syscall.SIGHUP,
-		syscall.SIGINT,
-		syscall.SIGTERM,
-		syscall.SIGQUIT)
-
-	go func() {
-		for {
-			s := <-ch
-			switch s {
-			case syscall.SIGINT:
-				closex()
-			case syscall.SIGHUP:
-				closex()
-			case syscall.SIGTERM:
-				closex()
-			case syscall.SIGQUIT:
-				closex()
-			}
-		}
-	}()
 }
 
 func shouldRestart() bool {
-	h := binHash(cache)
-	if h != lastBinHash {
-		lastBinHash = h
+	h := binHash()
+	if h != lastHash {
+		lastHash = h
 		return true
 	}
 
 	return false
 }
 
-func binHash(cache string) string {
-	f, err := os.Open(`./` + cache)
+func binHash() string {
+	f, err := os.Open(binFile)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -131,9 +99,4 @@ func binHash(cache string) string {
 
 	return fmt.Sprintf("%x", h.Sum(nil))
 
-}
-
-func closex() {
-	os.RemoveAll(`./tmp`)
-	os.Exit(1)
 }
