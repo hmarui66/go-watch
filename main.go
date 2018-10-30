@@ -43,7 +43,7 @@ func start() {
 				log.Println(`[go-watch] start`)
 			}
 
-			server = exec.Command(`./` + binFile)
+			server = exec.Command(binFile)
 
 			stdout, err := server.StdoutPipe()
 			if err != nil {
