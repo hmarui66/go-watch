@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"github.com/fsnotify/fsnotify"
 	"log"
 	"os"
@@ -9,6 +10,7 @@ import (
 )
 
 func watch() {
+	fileCount := 0
 	filepath.Walk(root(), func(path string, info os.FileInfo, err error) error {
 		if info.IsDir() && !isTmpDir(path) {
 			if len(path) > 1 && strings.HasPrefix(filepath.Base(path), `.`) {
@@ -20,9 +22,11 @@ func watch() {
 			}
 
 			watchFolder(path)
+			fileCount++
 		}
 		return err
 	})
+	fmt.Printf("watching target file count: %d\n", fileCount)
 }
 
 func watchFolder(path string) {
