@@ -1,0 +1,23 @@
+gibo 2.1.0 by Simon Whitaker <sw@netcetera.org>
+https://github.com/simonwhitaker/gibo
+gibo 2.1.0 by Simon Whitaker <sw@netcetera.org>
+https://github.com/simonwhitaker/gibo
+gibo 2.1.0 by Simon Whitaker <sw@netcetera.org>
+https://github.com/simonwhitaker/gibo
+### https://raw.github.com/github/gitignore/ec246076319913acee4aaeef8caf86b78e586e7a/Go.gitignore
+
+# Binaries for programs and plugins
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Test binary, build with `go test -c`
+*.test
+
+# Output of the go coverage tool, specifically when used with LiteIDE
+*.out
+
+# Dependency
+vendor/*
