@@ -23,9 +23,6 @@ func watch() {
 
 			watchFolder(path)
 			fileCount++
-			if fileCount > 10 {
-				fmt.Printf("setting up watching target file count: %d\n", fileCount)
-			}
 		}
 		return err
 	})
