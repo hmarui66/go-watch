@@ -13,7 +13,7 @@ var (
 		"root":      ".",
 		"tmp_path":  "./tmp",
 		"valid_ext": ".go, .tpl, .tmpl, .html, .toml, .yml",
-		"ignored":   "assets, tmp, vendor, gen",
+		"ignored":   "assets, tmp",
 	}
 )
 
