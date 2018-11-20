@@ -10,6 +10,11 @@ import (
 )
 
 func watch() {
+	watcher, err := fsnotify.NewWatcher()
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	fileCount := 0
 	filepath.Walk(root(), func(path string, info os.FileInfo, err error) error {
 		if info.IsDir() && !isTmpDir(path) {
@@ -21,7 +26,7 @@ func watch() {
 				return filepath.SkipDir
 			}
 
-			watchFolder(path)
+			watchFolder(watcher, path)
 			fileCount++
 		}
 		return err
@@ -29,12 +34,7 @@ func watch() {
 	fmt.Printf("watching target file count: %d\n", fileCount)
 }
 
-func watchFolder(path string) {
-	watcher, err := fsnotify.NewWatcher()
-	if err != nil {
-		log.Fatal(err)
-	}
-
+func watchFolder(watcher *fsnotify.Watcher, path string) {
 	go func() {
 		for {
 			select {
@@ -48,7 +48,7 @@ func watchFolder(path string) {
 		}
 	}()
 
-	err = watcher.Add(path)
+	err := watcher.Add(path)
 
 	if err != nil {
 		log.Fatal(err)
