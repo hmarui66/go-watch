@@ -12,7 +12,7 @@ import (
 var (
 	settings = map[string]string{
 		"root":      ".",
-		"tmp_path":  "./tmp",
+		"tmp_path":  "./.go_watch",
 		"valid_ext": ".go, .tpl, .tmpl, .html, .toml, .yml",
 		"ignored":   "assets, tmp, vendor",
 	}

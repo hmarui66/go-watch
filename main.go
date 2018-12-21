@@ -5,10 +5,8 @@ import (
 	"fmt"
 	"io"
 	"log"
-	"math/rand"
 	"os"
 	"os/exec"
-	"time"
 )
 
 var (
@@ -17,73 +15,76 @@ var (
 )
 
 func init() {
-	rand.Seed(time.Now().UnixNano())
-	binFile = tmpPath() + `/go-watch-tmp`
+	binFile = tmpPath() + `/server`
 	watchChan = make(chan string, 1000)
 }
 
 func main() {
+	go watch()
 	handleSig()
-	watch()
 	start()
 }
 
 func start() {
-	var server *exec.Cmd
+	var build, server *exec.Cmd
+	limitter := newLimitter(watchChan, 5)
 
 	for {
-		buildCmd := exec.Command(`go`, `build`, `-o`, binFile)
-		buildCmd.Stdout = os.Stdout
-		buildCmd.Stderr = os.Stderr
+		build = exec.Command(`go`, `build`, `-o`, binFile)
+		build.Stdout = os.Stdout
+		build.Stderr = os.Stderr
 
-		if err := buildCmd.Run(); err != nil {
-			log.Println(`failed to build source`)
-		}
-
-		if shouldRestart() {
-
-			if server != nil && server.Process != nil {
-				log.Println(`[go-watch] restarting...`)
-				if err := server.Process.Kill(); err != nil {
-					log.Fatal(`failed to terminate server process`)
+		if err := build.Run(); err != nil {
+			log.Printf(`failed to build source => %v`, err)
+		} else {
+			if should, err := shouldRestart(); err != nil {
+				log.Printf("failed to check server binary => %v", err)
+			} else if should {
+				if server != nil && server.Process != nil {
+					log.Println(`[go-watch] restarting...`)
+					if err := server.Process.Kill(); err != nil {
+						log.Fatalf(`failed to terminate server process => %v`, err)
+					}
+				} else {
+					log.Println(`[go-watch] start`)
 				}
-			} else {
-				log.Println(`[go-watch] start`)
-			}
 
-			server = exec.Command(binFile)
-			server.Stdout = os.Stdout
-			server.Stderr = os.Stderr
+				server = exec.Command(binFile)
+				server.Stdout = os.Stdout
+				server.Stderr = os.Stderr
 
-			if err := server.Start(); err != nil {
-				log.Fatal(err)
+				if err := server.Start(); err != nil {
+					log.Fatalf(`failed to start server process => %v`, err)
+				}
 			}
 		}
-		<-watchChan
+
+		limitter()
 	}
 }
 
-func shouldRestart() bool {
-	h := binHash()
-	if h != lastHash {
+func shouldRestart() (bool, error) {
+	if h, err := binHash(); err != nil {
+		return false, err
+	} else if h != lastHash {
 		lastHash = h
-		return true
+		return true, nil
 	}
 
-	return false
+	return false, nil
 }
 
-func binHash() string {
+func binHash() (string, error) {
 	f, err := os.Open(binFile)
 	if err != nil {
-		log.Fatal(err)
+		return ``, err
 	}
 	defer fileClose(f)
 
 	h := md5.New()
 	if _, err := io.Copy(h, f); err != nil {
-		log.Fatal(err)
+		return ``, err
 	}
 
-	return fmt.Sprintf("%x", h.Sum(nil))
+	return fmt.Sprintf("%x", h.Sum(nil)), nil
 }

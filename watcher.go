@@ -70,6 +70,10 @@ func handleEvent(watcher *fsnotify.Watcher, ev fsnotify.Event) error {
 	}
 
 	fi, err := os.Lstat(ev.Name)
+	if os.IsNotExist(err) {
+		return nil
+	}
+
 	if err != nil {
 		return err
 	}
