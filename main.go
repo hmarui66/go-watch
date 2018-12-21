@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bufio"
 	"crypto/md5"
 	"fmt"
 	"io"
@@ -33,39 +32,28 @@ func start() {
 	var server *exec.Cmd
 
 	for {
-		exec.Command(`go`, `build`, `-o`, binFile).Run()
+		buildCmd := exec.Command(`go`, `build`, `-o`, binFile)
+		buildCmd.Stdout = os.Stdout
+		buildCmd.Stderr = os.Stderr
+
+		if err := buildCmd.Run(); err != nil {
+			log.Println(`failed to build source`)
+		}
+
 		if shouldRestart() {
 
 			if server != nil && server.Process != nil {
 				log.Println(`[go-watch] restarting...`)
-				server.Process.Kill()
+				if err := server.Process.Kill(); err != nil {
+					log.Fatal(`failed to terminate server process`)
+				}
 			} else {
 				log.Println(`[go-watch] start`)
 			}
 
 			server = exec.Command(binFile)
-
-			stdout, err := server.StdoutPipe()
-			if err != nil {
-				log.Fatal(err)
-			}
-			scanner := bufio.NewScanner(stdout)
-			go func() {
-				for scanner.Scan() {
-					fmt.Println(scanner.Text())
-				}
-			}()
-
-			stderr, err := server.StderrPipe()
-			if err != nil {
-				log.Fatal(err)
-			}
-			errScanner := bufio.NewScanner(stderr)
-			go func() {
-				for errScanner.Scan() {
-					fmt.Println(errScanner.Text())
-				}
-			}()
+			server.Stdout = os.Stdout
+			server.Stderr = os.Stderr
 
 			if err := server.Start(); err != nil {
 				log.Fatal(err)
@@ -90,7 +78,7 @@ func binHash() string {
 	if err != nil {
 		log.Fatal(err)
 	}
-	defer f.Close()
+	defer fileClose(f)
 
 	h := md5.New()
 	if _, err := io.Copy(h, f); err != nil {
@@ -98,5 +86,4 @@ func binHash() string {
 	}
 
 	return fmt.Sprintf("%x", h.Sum(nil))
-
 }

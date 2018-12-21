@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"github.com/fsnotify/fsnotify"
 	"log"
 	"os"
@@ -15,42 +14,75 @@ func watch() {
 		log.Fatal(err)
 	}
 
-	fileCount := 0
-	filepath.Walk(root(), func(path string, info os.FileInfo, err error) error {
-		if info.IsDir() && !isTmpDir(path) {
-			if len(path) > 1 && strings.HasPrefix(filepath.Base(path), `.`) {
-				return filepath.SkipDir
-			}
-
-			if isIgnoredFolder(path) {
-				return filepath.SkipDir
-			}
-
-			watchFolder(watcher, path)
-			fileCount++
-		}
-		return err
-	})
-	fmt.Printf("watching target file count: %d\n", fileCount)
-}
-
-func watchFolder(watcher *fsnotify.Watcher, path string) {
 	go func() {
 		for {
 			select {
 			case ev := <-watcher.Events:
-				if isWatchedFile(ev.Name) {
-					watchChan <- ev.String()
+				if err = handleEvent(watcher, ev); err != nil {
+					log.Printf("failed to handle event: %v => %v", ev, err)
 				}
-			case err := <-watcher.Errors:
+			case err = <-watcher.Errors:
 				log.Printf("error: %s", err)
 			}
 		}
 	}()
 
-	err := watcher.Add(path)
+	err = filepath.Walk(root(), func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			log.Printf(`failed to walk a path: %s => %v`, path, err)
+			return err
+		}
 
-	if err != nil {
+		return addPath(watcher, path, info)
+	})
+
+	if err == filepath.SkipDir {
+		log.Println(err)
+	} else if err != nil {
 		log.Fatal(err)
 	}
+}
+
+func addPath(watcher *fsnotify.Watcher, path string, info os.FileInfo) error {
+	if info.IsDir() && !isTmpDir(path) {
+		if len(path) > 1 && strings.HasPrefix(filepath.Base(path), `.`) {
+			return filepath.SkipDir
+		}
+
+		if isIgnoredFolder(path) {
+			return filepath.SkipDir
+		}
+
+		return watcher.Add(path)
+	}
+
+	return nil
+}
+
+func handleEvent(watcher *fsnotify.Watcher, ev fsnotify.Event) error {
+	if isWatchedFile(ev.Name) {
+		watchChan <- ev.String()
+		return nil
+	}
+
+	if ev.Op != fsnotify.Create {
+		return nil
+	}
+
+	fi, err := os.Lstat(ev.Name)
+	if err != nil {
+		return err
+	}
+
+	if !fi.IsDir() {
+		return nil
+	}
+
+	if ev.Op == fsnotify.Create {
+		if err = addPath(watcher, ev.Name, fi); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
