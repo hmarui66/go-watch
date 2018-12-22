@@ -2,6 +2,7 @@ package main
 
 import (
 	"crypto/md5"
+	"flag"
 	"fmt"
 	"io"
 	"log"
@@ -20,6 +21,8 @@ func init() {
 }
 
 func main() {
+	flag.Parse()
+
 	go watch()
 	handleSig()
 	start()
@@ -49,7 +52,7 @@ func start() {
 					log.Println(`[go-watch] start`)
 				}
 
-				server = exec.Command(binFile)
+				server = exec.Command(binFile, flag.Args()...)
 				server.Stdout = os.Stdout
 				server.Stderr = os.Stderr
 
