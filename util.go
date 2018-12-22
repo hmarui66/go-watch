@@ -1,6 +1,7 @@
 package main
 
 import (
+	"log"
 	"os"
 	"os/signal"
 	"path/filepath"
@@ -11,7 +12,7 @@ import (
 var (
 	settings = map[string]string{
 		"root":      ".",
-		"tmp_path":  "./tmp",
+		"tmp_path":  "./.go_watch",
 		"valid_ext": ".go, .tpl, .tmpl, .html, .toml, .yml",
 		"ignored":   "assets, tmp, vendor",
 	}
@@ -90,7 +91,13 @@ func tmpPath() string {
 	return settings["tmp_path"]
 }
 
+func fileClose(file *os.File) {
+	if err := file.Close(); err != nil {
+		log.Printf("failed to close file: %s => %v\n", file.Name(), err)
+	}
+}
+
 func closex() {
-	os.RemoveAll(tmpPath())
+	_ = os.RemoveAll(tmpPath())
 	os.Exit(1)
 }
