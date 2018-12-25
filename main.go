@@ -30,7 +30,7 @@ func main() {
 
 func start() {
 	var build, server *exec.Cmd
-	limitter := newLimitter(watchChan, 5)
+	debounce := newDebouncer(watchChan, 5)
 
 	for {
 		build = exec.Command(`go`, `build`, `-o`, binFile)
@@ -62,7 +62,7 @@ func start() {
 			}
 		}
 
-		limitter()
+		debounce()
 	}
 }
 
