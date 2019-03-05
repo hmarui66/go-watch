@@ -8,15 +8,18 @@ import (
 	"log"
 	"os"
 	"os/exec"
+	"path"
 )
 
 var (
 	binFile, lastHash string
+	bs                *buildStatus
 	watchChan         chan string
 )
 
 func init() {
-	binFile = tmpPath() + `/server`
+	binFile = path.Join(tmpPath(), `server`)
+	bs = &buildStatus{errFile: path.Join(tmpPath(), `error`)}
 	watchChan = make(chan string, 1000)
 }
 
@@ -38,8 +41,10 @@ func start() {
 		build.Stderr = os.Stderr
 
 		if err := build.Run(); err != nil {
+			bs.error()
 			log.Printf(`failed to build source => %v`, err)
 		} else {
+			bs.success()
 			if should, err := shouldRestart(); err != nil {
 				log.Printf("failed to check server binary => %v", err)
 			} else if should {
