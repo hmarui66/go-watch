@@ -36,7 +36,7 @@ func start() {
 	debounce := newDebouncer(watchChan, 5)
 
 	for {
-		build = exec.Command(`go`, `build`, `-o`, binFile)
+		build = exec.Command(`go`, `build`, `-i` ,`-o`, binFile)
 		build.Stdout = os.Stdout
 		build.Stderr = os.Stderr
 
