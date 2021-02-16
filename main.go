@@ -15,6 +15,7 @@ var (
 	binFile, lastHash string
 	bs                *buildStatus
 	watchChan         chan string
+	buildArgs         string
 )
 
 func init() {
@@ -24,6 +25,7 @@ func init() {
 }
 
 func main() {
+	flag.StringVar(&buildArgs, `build-args`, `-i`, `Set build arguments except for "-o"`)
 	flag.Parse()
 
 	go watch()
@@ -36,7 +38,7 @@ func start() {
 	debounce := newDebouncer(watchChan, 5)
 
 	for {
-		build = exec.Command(`go`, `build`, `-i` ,`-o`, binFile)
+		build = exec.Command(`go`, `build`, `-o`, binFile, buildArgs)
 		build.Stdout = os.Stdout
 		build.Stderr = os.Stderr
 
