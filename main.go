@@ -15,6 +15,7 @@ var (
 	binFile, lastHash string
 	bs                *buildStatus
 	watchChan         chan string
+	buildFlags        string
 )
 
 func init() {
@@ -24,6 +25,7 @@ func init() {
 }
 
 func main() {
+	flag.StringVar(&buildFlags, `build-flags`, ``, `Set build flags for go build`)
 	flag.Parse()
 
 	go watch()
@@ -36,7 +38,8 @@ func start() {
 	debounce := newDebouncer(watchChan, 5)
 
 	for {
-		build = exec.Command(`go`, `build`, `-i` ,`-o`, binFile)
+		// Execute through bash command to pass all arbitrary build flags like `-ldflags "-X sampleValue=3"`
+		build = exec.Command(`bash`, `-c`, fmt.Sprintf("go build -i -o %s %s", binFile, buildFlags))
 		build.Stdout = os.Stdout
 		build.Stderr = os.Stderr
 
