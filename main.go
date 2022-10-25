@@ -39,7 +39,7 @@ func start() {
 
 	for {
 		// Execute through bash command to pass all arbitrary build flags like `-ldflags "-X sampleValue=3"`
-		build = exec.Command(`bash`, `-c`, fmt.Sprintf("go build -i -o %s %s", binFile, buildFlags))
+		build = exec.Command(`bash`, `-c`, fmt.Sprintf("go build -o %s %s", binFile, buildFlags))
 		build.Stdout = os.Stdout
 		build.Stderr = os.Stderr
 

@@ -14,7 +14,7 @@ go-watch
 #### Go build flags
 
 You can use go build flags with `-build-flags` flag.
-These flags are set in the form of `go build -i -o {binfile} [build flags]`.
+These flags are set in the form of `go build -o {binfile} [build flags]`.
 
 For example, this command
 
@@ -25,7 +25,7 @@ go-watch -build-flags '-ldflags "-X configs.someValue=100 -X configs.anotherValu
 will trigger the following build command.
 
 ```sh
-go build -i -o {binfile} -ldflags "-X configs.someValue=100 -X configs.anotherValue=300"
+go build -o {binfile} -ldflags "-X configs.someValue=100 -X configs.anotherValue=300"
 ```
 
 ## Refs
